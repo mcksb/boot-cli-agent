@@ -1,0 +1,30 @@
+{
+  "autorun": false,
+  "terminals": [
+    {
+      "name": "Git",
+      "icon": "source-control-view-icon",
+      "color": "terminal.ansiRed",
+      "description": "Git version control",
+      "focus": false,
+      "autorun": true,
+      "command": "git branch"
+    },
+    {
+      "name": "boot-cli-agent",
+      "icon": "terminal-view-icon",
+      "color": "terminal.ansiGreen",
+      "description": "Project terminal",
+      "focus": true,
+      "autorun": true
+    },
+    {
+      "name": "Terminal",
+      "icon": "terminal-view-icon",
+      "color": "terminal.ansiCyan",
+      "description": "Extra terminal",
+      "focus": false,
+      "autorun": true
+    }
+  ]
+}
