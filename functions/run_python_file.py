@@ -1,16 +1,25 @@
 import os
 import subprocess
+from google import genai
+from google.genai import types
 
-schema_get_files_info = types.FunctionDeclaration(
-    name="get_files_info",
-    description="Lists files in a specified directory relative to the working directory, providing file size and directory status",
+schema_run_python_file = types.FunctionDeclaration(
+    name="run_python_file",
+    description="Runs a python script file",
     parameters=types.Schema(
         type=types.Type.OBJECT,
         properties={
-            "directory": types.Schema(
+            "file_path": types.Schema(
                 type=types.Type.STRING,
-                description="Directory path to list files from, relative to the working directory (default is the working directory itself)",
+                description="The specified file path to target a python file to execute. Relative to the current working directory.",
             ),
+            "args": types.Schema(
+                type=types.Type.ARRAY,
+                items=types.Schema(
+                    type=types.Type.STRING
+                ),
+                description="Arguments to run specified python scripts with.",
+            )
         },
     ),
 )

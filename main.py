@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 from prompts import system_prompt
-from call_function import available_functions
+from call_function import available_functions, call_function
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -24,16 +24,41 @@ def main():
     res = client.models.generate_content(
         model=model,
         contents=messages,
-        config=types.GenerateContentConfig(system_instruction=system_prompt),
-        tools=available_functions,
-        )
-    if res.usage_metadata == None:
+        config=types.GenerateContentConfig(
+            tools=[available_functions],
+            system_instruction=system_prompt
+        ),
+    )
+    if not res.usage_metadata:
         raise RuntimeError("API request failed: Usage metadata is None")
-    if args.verbose == True:
-        print(f"User prompt: {prompt}")
+    
+    if args.verbose:
+        print(f"User prompt: {args.user_prompt}")
         print(f"Prompt tokens: {res.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {res.usage_metadata.candidates_token_count}")
-    print(f"Response:\n{res.text}")
+    
+    if not res.function_calls:
+        print("Response:")
+        print(res.text)
+        return
 
+    function_results = []
+    for function in res.function_calls:
+        call_function_result = call_function(function, args.verbose)
+        
+        if not call_function_result.parts:
+            raise Exception("call_function_results.parts is empty")
+        
+        if not call_function_result.parts[0].function_response:
+            raise Exception("parts[0].function_response is None")
+        
+        if not call_function_result.parts[0].function_response.response:
+            raise Exception("parts[0.function_response.response is None]")
+        
+        function_results.append(call_function_result.parts[0])
+        
+        if args.verbose:
+            print(f"-> {call_function_result.parts[0].function_response.response}")
+    
 if __name__ == "__main__":
     main()
