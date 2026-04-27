@@ -1,5 +1,6 @@
 import os
 import argparse
+import sys
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -19,46 +20,62 @@ args = parser.parse_args()
 model = "gemini-2.5-flash"
 prompt = args.user_prompt
 
+def call_agent():
+
+    return
+
 def main():
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
-    res = client.models.generate_content(
-        model=model,
-        contents=messages,
-        config=types.GenerateContentConfig(
-            tools=[available_functions],
-            system_instruction=system_prompt
-        ),
-    )
-    if not res.usage_metadata:
-        raise RuntimeError("API request failed: Usage metadata is None")
-    
-    if args.verbose:
-        print(f"User prompt: {args.user_prompt}")
-        print(f"Prompt tokens: {res.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {res.usage_metadata.candidates_token_count}")
-    
-    if not res.function_calls:
-        print("Response:")
-        print(res.text)
-        return
 
-    function_results = []
-    for function in res.function_calls:
-        call_function_result = call_function(function, args.verbose)
-        
-        if not call_function_result.parts:
-            raise Exception("call_function_results.parts is empty")
-        
-        if not call_function_result.parts[0].function_response:
-            raise Exception("parts[0].function_response is None")
-        
-        if not call_function_result.parts[0].function_response.response:
-            raise Exception("parts[0.function_response.response is None]")
-        
-        function_results.append(call_function_result.parts[0])
-        
+    for _ in range(20):
+        res = client.models.generate_content(
+            model=model,
+            contents=messages,
+            config=types.GenerateContentConfig(
+                tools=[available_functions],
+                system_instruction=system_prompt
+            ),
+        )
+
+        if res.candidates:
+            for candidate in res.candidates:
+                messages.append(candidate.content)
+
+        if not res.usage_metadata:
+            raise RuntimeError("API request failed: Usage metadata is None")
+
         if args.verbose:
-            print(f"-> {call_function_result.parts[0].function_response.response}")
+            print(f"User prompt: {args.user_prompt}")
+            print(f"Prompt tokens: {res.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {res.usage_metadata.candidates_token_count}")
+        
+        if not res.function_calls:
+            print("Response:")
+            print(res.text)
+            return
+
+        function_results = []
+        for function in res.function_calls:
+            call_function_result = call_function(function, args.verbose)
+            
+            if not call_function_result.parts:
+                raise Exception("call_function_results.parts is empty")
+            
+            if not call_function_result.parts[0].function_response:
+                raise Exception("parts[0].function_response is None")
+            
+            if not call_function_result.parts[0].function_response.response:
+                raise Exception("parts[0.function_response.response is None]")
+            
+            function_results.append(call_function_result.parts[0])
+            
+            messages.append(types.Content(role="user", parts=function_results))
+            
+            if args.verbose:
+                print(f"-> {call_function_result.parts[0].function_response.response}")
+
+    print("Maximum number of iterations reached")
+    sys.exit(1)
     
 if __name__ == "__main__":
     main()
